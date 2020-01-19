@@ -9,10 +9,10 @@ import json
 from distutils.version import LooseVersion
 import scipy.misc
 import logging
-
-import matplotlib as mpl
-mpl.use('Agg')
-from matplotlib import pyplot as plt
+#
+# import matplotlib as mpl
+# mpl.use('Agg')
+# from matplotlib import pyplot as plt
 
 from PIL import Image
 import numpy as np

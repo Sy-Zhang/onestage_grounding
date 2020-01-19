@@ -33,8 +33,8 @@ import logging
 import json
 import re
 
-from pytorch_pretrained_bert.tokenization import BertTokenizer
-from pytorch_pretrained_bert.modeling import BertModel
+# from pytorch_pretrained_bert.tokenization import BertTokenizer
+# from pytorch_pretrained_bert.modeling import BertModel
 from utils.transforms import letterbox, random_affine
 
 sys.modules['utils'] = utils
@@ -184,7 +184,7 @@ class ReferDataset(data.Dataset):
         self.transform = transform
         self.testmode = testmode
         self.split = split
-        self.tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=True)
+        # self.tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=True)
         self.augment=augment
         self.return_idx=return_idx
 
