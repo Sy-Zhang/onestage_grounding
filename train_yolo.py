@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 
 from PIL import Image
 import numpy as np
+import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -137,7 +138,7 @@ def build_target(raw_coord, pred):
                 x[1] / (args.anchor_imsize/grid)) for x in anchors]
 
             ## Get shape of gt box
-            gt_box = torch.FloatTensor(np.array([0, 0, gw, gh])).unsqueeze(0)
+            gt_box = torch.FloatTensor(np.array([0, 0, gw.item(), gh.item()])).unsqueeze(0)
             ## Get shape of anchor box
             anchor_shapes = torch.FloatTensor(np.concatenate((np.zeros((len(scaled_anchors), 2)), np.array(scaled_anchors)), 1))
             ## Calculate iou between gt and anchor shapes
@@ -215,8 +216,8 @@ def main():
     print(sys.argv[0])
     print(args)
     print('----------------------------------------------------------------------')
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     ## fix seed
     cudnn.benchmark = False
     cudnn.deterministic = True
@@ -377,7 +378,7 @@ def train_epoch(train_loader, model, optimizer, epoch, size_average):
 
     model.train()
     end = time.time()
-
+    pbar = tqdm.tqdm(total=len(train_loader))
     for batch_idx, (imgs, word_id, word_mask, bbox) in enumerate(train_loader):
         imgs = imgs.cuda()
         word_id = word_id.cuda()
@@ -402,7 +403,8 @@ def train_epoch(train_loader, model, optimizer, epoch, size_average):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        losses.update(loss.data[0], imgs.size(0))
+        losses.update(loss.item(), imgs.size(0))
+        pbar.update(1)
 
         ## training offset eval: if correct with gt center loc
         ## convert offset pred to boxes
@@ -432,7 +434,7 @@ def train_epoch(train_loader, model, optimizer, epoch, size_average):
             gt_conf_list.append(gt_param[ii][:,:,4,:,:].contiguous().view(args.batch_size,-1))
         pred_conf = torch.cat(pred_conf_list, dim=1)
         gt_conf = torch.cat(gt_conf_list, dim=1)
-        accu_center = np.sum(np.array(pred_conf.max(1)[1] == gt_conf.max(1)[1], dtype=float))/args.batch_size
+        accu_center = np.sum(np.array(pred_conf.max(1)[1].cpu() == gt_conf.max(1)[1].cpu(), dtype=float))/args.batch_size
         ## metrics
         miou.update(iou.data[0], imgs.size(0))
         acc.update(accu, imgs.size(0))
@@ -461,6 +463,7 @@ def train_epoch(train_loader, model, optimizer, epoch, size_average):
                     data_time=data_time, loss=losses, miou=miou, acc=acc, acc_c=acc_center) 
             print(print_str)
             logging.info(print_str)
+    pbar.close()
 
 def validate_epoch(val_loader, model, size_average, mode='val'):
     batch_time = AverageMeter()
