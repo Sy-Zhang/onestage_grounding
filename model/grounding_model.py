@@ -192,7 +192,7 @@ class grounding_model(nn.Module):
         ## Visual Module
         ## [1024, 13, 13], [512, 26, 26], [256, 52, 52]
         batch_size = image.size(0)
-        raw_fvisu = self.visumodel(image)
+        raw_fvisu = self.visumodel(image)[:1]
         fvisu = []
         for ii in range(len(raw_fvisu)):
             fvisu.append(self.mapping_visu._modules[str(ii)](raw_fvisu[ii]))
